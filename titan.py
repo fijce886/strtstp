@@ -176,7 +176,7 @@ def broadcast_message(message):
 # /owner command handler
 @bot.message_handler(commands=['owner'])
 def send_owner_info(message):
-    owner_message = "This Bot Has Been Developed By @SomsPvt"
+    owner_message = "This Bot Has Been Developed By @Rishi747"
     bot.send_message(message.chat.id, owner_message)
 
 @bot.message_handler(commands=['approve', 'disapprove'])
